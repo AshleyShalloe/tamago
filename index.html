@@ -7,7 +7,28 @@
     <title>Tamago</title>
     <style>
         html {
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #e6e7e8;
+        }
+
+        body {
+            margin: 0 auto;
+            max-width: 90vw;
+            display: flex;
+            flex-direction: column;
+            align-content: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 5px 5px 5px lightgrey;
+            /* text-align: center; */
+            position: relative;
+            border-radius: 0.4em;
         }
 
         .geneSegmentsContainerContainer {
@@ -56,7 +77,7 @@
             text-shadow: 1px 1px 5px black;
         }
 
-        #meh {
+        #figureContainer {
             display: flex;
             flex-wrap: wrap;
         }
@@ -67,62 +88,64 @@
             margin-bottom: 5px;
         }
 
-        #testForm input {
-            width: 100px;
-        }
-
         #csvInputContainer textarea {
-            width: 900px;
+            width: 100%;
             height: 100px;
             white-space: pre;
             overflow-wrap: normal;
             overflow-x: scroll;
         }
+
+        #csvInputContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #csvInputContainer .toolboxSection {
+            background: #f1f1f1;
+            border-radius: 10px;
+            padding: 10px;
+            margin-right: 10px;
+        }
+
+        #csvInputContainer .toolbox {
+            display: flex;
+            width: 100%;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
 <body>
+    <div id="introCard" class="card">
+        <h1>Tamago</h1>
+        <p>A tool for generating Influenza A genotype egg plots.</p>
+        <p>To use, either:
+        <ul>
+            <li>upload a CSV containing genotype data</li>
+            <li>or paste a CSV directly into the text box</li>
+            <li>or click "Demo" to see sample data</li>
+        </ul>
+        Then click "Generate figures".</p>
+    </div>
 
-<div id="csvInputContainer">
-        <h2>Input CSV</h2>
-        <textarea>Title,NS,MP,NA,NP,HA,PA,PB1,PB2
-Test 1 - Standard,genotype0,genotype1,genotype2,genotype3,genotype4,genotype5,genotype6,genotype7
-Test 2 - Missing genotypes,genotype0,genotype2,genotype3,genotype4
-Test 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,genotype9001,genotype5,genotype6,genotype7</textarea>
+    <div id="csvInputContainer" class="card">
+        <h2>Input data</h2>
+        <div class="toolbox">
+            <div class="toolboxSection">Upload file <input type="file" id="file" oninput='readInputFile()' autofocus />
+            </div>
+            <div class="toolboxSection">Use sample data <button onclick="addSampleCsvData()">Demo</button></div>
+        </div>
+        <textarea id="inputCsvTextarea"></textarea>
+        <button onclick=" parseCsvStringToFigures(document.getElementById('inputCsvTextarea').value)"
+            style="margin: 20px 0px 10px 0px">Generate figures</button>
     </div>
 
 
-    <div id="meh"></div>
-
-    <!-- <div id="testForm">
-        <table>
-            <tr>
-                <th>Figure title</th>
-                <th>NS</th>
-                <th>MP</th>
-                <th>NA</th>
-                <th>NP</th>
-                <th>HA</th>
-                <th>PA</th>
-                <th>PB1</th>
-                <th>PB2</th>
-                <th>Generate fig</th>
-            </tr>
-            <tr>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td><input type="text" /></td>
-                <td style="text-align: center"><button
-                        onclick="parseCsvStringToFigures(getTestFormInputAsCsv())">Go</button></td>
-            </tr>
-        </table>
-    </div> -->
+    <div id="figureContainer" style="display: none" class="card"></div>
 </body>
 <script>
     'use strict'
@@ -188,19 +211,18 @@ Test 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,geno
         return inputColArray[idx % inputColArray.length]
     }
 
-    function getTestFormInputAsCsv() {
-        var header = [...document.getElementById("testForm").getElementsByTagName("th")].map(x => x.innerText)
-        var data = [...document.getElementById("testForm").getElementsByTagName("input")].map(x => x.value)
-        header.pop() // trash the last col
-
-        return `${header.join(",")}\n${data.join(",")}`
-    }
-
     function parseCsvStringToFigures(inputCsvString) {
-        var csvRows = inputCsvString.split("\n")
+        var csvRows = inputCsvString.trim().split("\n")
         var header = csvRows[0].split(",")
         var body = csvRows.slice(1)
 
+        // clear the figure container
+        figureContainerDiv.innerHTML = ""
+        // display the figure container if
+        // it isn't already visible
+        figureContainerDiv.style.display = 'flex'
+
+        // populate the figure container
         for (var row = 0; row < body.length; row++) {
             var rowData = body[row].split(",")
             var tempObj = {}
@@ -219,7 +241,7 @@ Test 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,geno
             }
 
             // add the thing to the DOM
-            mehDiv.appendChild(createEggDiagramElement(
+            figureContainerDiv.appendChild(createEggDiagramElement(
                 title,
                 tempObj,
                 pheColArray
@@ -227,6 +249,32 @@ Test 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,geno
         }
 
     }
+
+    function addSampleCsvData() {
+        var testData = "Title,NS,MP,NA,NP,HA,PA,PB1,PB2\nTest 1 - Standard,genotype0,genotype1,genotype2,genotype3,genotype4,genotype5,genotype6,genotype7\nTest 2 - Missing genotypes,genotype0,genotype2,genotype3,genotype4\nTest 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,genotype9001,genotype5,genotype6,genotype7\n" // deliberate blank row at the end
+        inputCsvTextarea.value = testData
+    }
+
+    function readInputFile() {
+        if (document.querySelector("#file").value == '') {
+            document.getElementById("encoded_result").value = 'No file selected'
+            return;
+        }
+
+        var file = document.querySelector("#file").files[0]
+        var csvTextarea = document.getElementById("inputCsvTextarea")
+        var reader = new FileReader()
+
+        reader.onload = function (e) {
+            csvTextarea.value = (e.target.result);
+        };
+        reader.onerror = function (e) {
+            csvTextarea.value = 'Error reading file';
+        };
+
+        reader.readAsText(file);
+    };
+
 
     // globals
     const geneOrderArray = ["NS", "MP", "NA", "NP", "HA", "PA", "PB1", "PB2"]
@@ -249,49 +297,10 @@ Test 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,geno
         "Rose": "#BC204B"
     };
     const pheColArray = [...Object.values(pheColours)]
-    const mehDiv = document.getElementById("meh")
+    const figureContainerDiv = document.getElementById("figureContainer")
 
     // init
     function init() {
-        mehDiv.appendChild(createEggDiagramElement(
-            "Test 1 - Standard",
-            {
-                "NS": "genotype0",
-                "MP": "genotype1",
-                "NA": "genotype2",
-                "NP": "genotype3",
-                "HA": "genotype4",
-                "PA": "genotype5",
-                "PB1": "genotype6",
-                "PB2": "genotype7"
-            },
-            pheColArray
-        ))
-        mehDiv.appendChild(createEggDiagramElement(
-            "Test 2 - Missing genotypes",
-            {
-                "NS": "genotype0",
-                "MP": "genotype1",
-                "NA": "genotype2",
-                "NP": "genotype3",
-                "HA": "genotype4",
-            },
-            pheColArray
-        ))
-        mehDiv.appendChild(createEggDiagramElement(
-            "Test 3 - Repeated and new genotypes",
-            {
-                "NS": "genotype5",
-                "MP": "genotype4",
-                "NA": "genotype3",
-                "NP": "genotype2",
-                "HA": "genotype9001",
-                "PA": "genotype5",
-                "PB1": "genotype6",
-                "PB2": "genotype7",
-            },
-            pheColArray
-        ))
     }
 
     init();

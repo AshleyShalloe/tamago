@@ -1,0 +1,4 @@
+Title,NS,MP,NA,NP,HA,PA,PB1,PB2
+CSV Upload Test 1 - Standard,genotype0,genotype1,genotype2,genotype3,genotype4,genotype5,genotype6,genotype7
+CSV Upload Test 2 - Missing genotypes,genotype0,genotype2,genotype3,genotype4
+CSV Upload Test 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,genotype9001,genotype5,genotype6,genotype7
