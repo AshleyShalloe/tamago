@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <title>Tamago</title>
+    <style>
+        html {
+            font-family: Arial, sans-serif;
+        }
+
+        .geneSegmentsContainerContainer {
+            padding: 10px;
+            border: 1px solid lightgray;
+            width: 400px;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            justify-content: center;
+            margin: 10px;
+            border-radius: 10px;
+        }
+
+        .geneSegmentsContainer {
+            display: flex;
+            flex-direction: column;
+            min-width: 400px;
+        }
+
+        .geneSegment {
+            height: 30px;
+            background: blueviolet;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+        }
+
+        .geneSegmentName {
+            background: white;
+            border-radius: 5px;
+            color: black;
+            padding-left: 5px;
+            padding-right: 5px;
+            margin-left: 5px;
+            margin-right: 5px;
+            min-width: 4ch;
+            text-align: center;
+            user-select: none;
+        }
+
+        .geneSegmentGenotypeLabel {
+            color: white;
+            text-shadow: 1px 1px 5px black;
+        }
+
+        #meh {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .diagramTitle {
+            font-weight: bold;
+            font-size: larger;
+            margin-bottom: 5px;
+        }
+
+        #testForm input {
+            width: 100px;
+        }
+
+        #csvInputContainer textarea {
+            width: 900px;
+            height: 100px;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: scroll;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="csvInputContainer">
+        <h2>Input CSV</h2>
+        <textarea>Title,NS,MP,NA,NP,HA,PA,PB1,PB2
+Test 1 - Standard,genotype0,genotype1,genotype2,genotype3,genotype4,genotype5,genotype6,genotype7
+Test 2 - Missing genotypes,genotype0,genotype2,genotype3,genotype4
+Test 3 - Repeated and new genotypes,genotype5,genotype4,genotype4,genotype2,genotype9001,genotype5,genotype6,genotype7</textarea>
+    </div>
+
+
+    <div id="meh"></div>
+
+    <!-- <div id="testForm">
+        <table>
+            <tr>
+                <th>Figure title</th>
+                <th>NS</th>
+                <th>MP</th>
+                <th>NA</th>
+                <th>NP</th>
+                <th>HA</th>
+                <th>PA</th>
+                <th>PB1</th>
+                <th>PB2</th>
+                <th>Generate fig</th>
+            </tr>
+            <tr>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td style="text-align: center"><button
+                        onclick="parseCsvStringToFigures(getTestFormInputAsCsv())">Go</button></td>
+            </tr>
+        </table>
+    </div> -->
+</body>
+<script>
+    'use strict'
+
+    function createEggDiagramElement(title, segmentToGenotypeObj, inputColourArray) {
+        var outerReturnDiv = document.createElement("div")
+        var innerReturnDiv = document.createElement("div")
+        outerReturnDiv.classList.add("geneSegmentsContainerContainer")
+        innerReturnDiv.classList.add("geneSegmentsContainer")
+        title = title ? title : "Untitled"
+
+        if (typeof (title) !== "string") {
+            console.error("Invalid title", title)
+            return
+        }
+        if (typeof (segmentToGenotypeObj) !== "object") {
+            console.error("Invalid segmentToGenotypeObj", segmentToGenotypeObj)
+            return
+        }
+
+        outerReturnDiv.innerHTML = "<div class='diagramTitle'>" + title + "</div>"
+
+        geneOrderArray.forEach(x => {
+            var tempScaledWidthPct = 100 * geneToWidthObj[x] / maxWidth
+            var tempDiv = document.createElement("div")
+            var textSpan = document.createElement("span")
+
+            tempDiv.style.width = `${tempScaledWidthPct}%`
+            tempDiv.classList.add("geneSegment", `segment_${x}`)
+
+            textSpan.innerHTML = x
+            textSpan.classList.add("geneSegmentName")
+
+            tempDiv.appendChild(textSpan)
+
+            if (segmentToGenotypeObj) {
+                var tempGenotypeLabelSpan = document.createElement("span")
+                var tempGenotype = segmentToGenotypeObj[x] ? segmentToGenotypeObj[x] : "<i>unspecified</i>"
+
+                uniqueGenotypesSeen.add(tempGenotype)
+                tempDiv.style.background = assignColour(tempGenotype, inputColourArray)
+
+                tempGenotypeLabelSpan.classList.add("geneSegmentGenotypeLabel")
+                tempGenotypeLabelSpan.innerHTML = tempGenotype
+
+                tempDiv.appendChild(tempGenotypeLabelSpan)
+            }
+
+
+            innerReturnDiv.appendChild(tempDiv)
+        })
+
+        outerReturnDiv.appendChild(innerReturnDiv)
+
+        return outerReturnDiv
+    }
+
+    function assignColour(inputGenotype, inputColArray) {
+        var idx = [...uniqueGenotypesSeen].indexOf(inputGenotype)
+
+        inputColArray = inputColArray ? inputColArray : pheColArray
+
+        return inputColArray[idx % inputColArray.length]
+    }
+
+    function getTestFormInputAsCsv() {
+        var header = [...document.getElementById("testForm").getElementsByTagName("th")].map(x => x.innerText)
+        var data = [...document.getElementById("testForm").getElementsByTagName("input")].map(x => x.value)
+        header.pop() // trash the last col
+
+        return `${header.join(",")}\n${data.join(",")}`
+    }
+
+    function parseCsvStringToFigures(inputCsvString) {
+        var csvRows = inputCsvString.split("\n")
+        var header = csvRows[0].split(",")
+        var body = csvRows.slice(1)
+
+        for (var row = 0; row < body.length; row++) {
+            var rowData = body[row].split(",")
+            var tempObj = {}
+
+            for (var col = 0; col < rowData.length; col++) {
+                var tempSegment = header[col]
+                var tempGenotype = rowData[col]
+                var title
+                if (geneOrderArray.includes(tempSegment)) {
+                    tempObj[tempSegment] = tempGenotype
+                }
+                else {
+                    // assume this is the title
+                    title = tempGenotype
+                }
+            }
+
+            // add the thing to the DOM
+            mehDiv.appendChild(createEggDiagramElement(
+                title,
+                tempObj,
+                pheColArray
+            ))
+        }
+
+    }
+
+    // globals
+    const geneOrderArray = ["NS", "MP", "NA", "NP", "HA", "PA", "PB1", "PB2"]
+    const geneToWidthObj = { "NS": 865, "MP": 1002, "NA": 1433, "NP": 1540, "HA": 1751, "PA": 2208, "PB1": 2316, "PB2": 2316 }
+    const maxWidth = Math.max(...Object.values(geneToWidthObj))
+    var uniqueGenotypesSeen = new Set()
+
+    const pheColours = {
+        "PHE Red": "#862633",
+        "Teal": "#00AB8E",
+        "Navy": "#012169",
+        "Mushroom": "#D6D2C4",
+        "Cool Grey": "#98A4AE",
+        "Peach": "#ECA154",
+        "Yellow": "#EAAA00",
+        "Grass": "#009F4D",
+        "Sky": "#8DB9CA",
+        "Moonlight": "#004C97",
+        "Plum": "#512D6D",
+        "Rose": "#BC204B"
+    };
+    const pheColArray = [...Object.values(pheColours)]
+    const mehDiv = document.getElementById("meh")
+
+    // init
+    function init() {
+        mehDiv.appendChild(createEggDiagramElement(
+            "Test 1 - Standard",
+            {
+                "NS": "genotype0",
+                "MP": "genotype1",
+                "NA": "genotype2",
+                "NP": "genotype3",
+                "HA": "genotype4",
+                "PA": "genotype5",
+                "PB1": "genotype6",
+                "PB2": "genotype7"
+            },
+            pheColArray
+        ))
+        mehDiv.appendChild(createEggDiagramElement(
+            "Test 2 - Missing genotypes",
+            {
+                "NS": "genotype0",
+                "MP": "genotype1",
+                "NA": "genotype2",
+                "NP": "genotype3",
+                "HA": "genotype4",
+            },
+            pheColArray
+        ))
+        mehDiv.appendChild(createEggDiagramElement(
+            "Test 3 - Repeated and new genotypes",
+            {
+                "NS": "genotype5",
+                "MP": "genotype4",
+                "NA": "genotype3",
+                "NP": "genotype2",
+                "HA": "genotype9001",
+                "PA": "genotype5",
+                "PB1": "genotype6",
+                "PB2": "genotype7",
+            },
+            pheColArray
+        ))
+    }
+
+    init();
+
+</script>
+
+</html>
