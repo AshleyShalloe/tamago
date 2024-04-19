@@ -107,6 +107,7 @@
             border-radius: 10px;
             padding: 10px;
             margin-right: 10px;
+            box-shadow: 1px 1px 5px rgb(143, 143, 143);
         }
 
         #csvInputContainer .toolbox {
@@ -114,7 +115,7 @@
             width: 100%;
             flex-direction: row;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         #introCard li {
@@ -126,6 +127,7 @@
 <body>
     <div id="introCard" class="card">
         <h1>Tamago</h1>
+        <h2>Intro</h2>
         <p>A tool for generating Influenza A genotype egg plots.</p>
         <p>To use, either:
         <ul>
@@ -134,6 +136,13 @@
             <li>or click "Demo" to see sample data</li>
         </ul>
         Then click "Generate figures".</p>
+        <h2>Data spec</h2>
+        <p>See the sample data to get up and running. The following rules are followed:
+        <ul>
+            <li>Columns matching segment names are interpreted as such</li>
+            <li>Columns not matching segment names (for example, "Title") are interpreted as the plot title</li>
+            <li>If there are additional non-segment columns, the title will be whichever the last column is</li>
+        </ul>
     </div>
 
     <div id="csvInputContainer" class="card">
